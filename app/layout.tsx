@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css"
 import localFont from 'next/font/local'
+import { ToasTProvider } from "@/context/ToastContext";
 
 
 
@@ -29,8 +30,10 @@ export default function RootLayout({
       lang="en"
       className={` ${satoshi.variable} h-screen overflow-hidden antialiased`}
     >
-      <body className="font-satoshi">
+      <body className="font-satoshi bg-[#E8ECF1]">
+        <ToasTProvider>
           {children}
+        </ToasTProvider>
         </body>
     </html>
   );

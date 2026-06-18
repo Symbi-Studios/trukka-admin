@@ -1,4 +1,5 @@
 import { SideBar } from "@/components/layouts/SideBar";
+import { AuthProvider } from "@/context/AuthContext";
 
 export default function DashboardLayout({
   children,
@@ -6,7 +7,8 @@ export default function DashboardLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <div
+    <AuthProvider>
+       <div
       lang="en"
       className={` h-screen overflow-hidden`}
     >
@@ -17,5 +19,7 @@ export default function DashboardLayout({
         </main>
         </div>
     </div>
+    </AuthProvider>
+   
   );
 }
