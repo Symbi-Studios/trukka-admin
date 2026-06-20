@@ -109,7 +109,7 @@ const JobDetails = ({ jobId, onBack, onIntervene }: { jobId: string; onBack: () 
                  <div className='mt-5 grid lg:grid-cols-3 gap-7'>
                     {/* left details */}
                     <div className='grid gap-4 bg-white rounded-2xl py-6 px-3 col-span-2 '>
-                        <p className='font-semibold text-xl'>{jobData.jobNumber}</p>
+                        <p className='font-semibold text-xl'>{jobData?.jobNumber}</p>
                         <div className='w-ful h-[200px] bg-blue-300'></div>
 
                         {/* Pickup and delivery */}
@@ -156,9 +156,9 @@ const JobDetails = ({ jobId, onBack, onIntervene }: { jobId: string; onBack: () 
                     <div className=' bg-white rounded-2xl py-6 px-3 '>
                         {/* role */}
                         <div>
-                            {jobData.forwarder && <UserRole name={jobData?.forwarder.name} role='Forwarder' email={jobData?.forwarder.email} id={jobData?.forwarder.id} />}
-                            {jobData.trucker && <UserRole name={jobData?.trucker.name} role='Trucker' email={jobData?.trucker.email} id={jobData?.trucker.id} />}
-                            {jobData.driver && <UserRole name={jobData?.driver.name} role='Driver' email={jobData?.driver.email} id={jobData?.driver.id} />}
+                            {jobData?.forwarder && <UserRole name={jobData?.forwarder.name} role='Forwarder' email={jobData?.forwarder.email} id={jobData?.forwarder.id} />}
+                            {jobData?.trucker && <UserRole name={jobData?.trucker.name} role='Trucker' email={jobData?.trucker.email} id={jobData?.trucker.id} />}
+                            {jobData?.driver && <UserRole name={jobData?.driver.name} role='Driver' email={jobData?.driver.email} id={jobData?.driver.id} />}
                         </div>
 
                         {/* docs */}
@@ -193,7 +193,7 @@ const JobDetails = ({ jobId, onBack, onIntervene }: { jobId: string; onBack: () 
                         <div className='mt-7'>
                         <h3 className="text-[11px] font-bold text-slate-400 tracking-wider uppercase mb-4"> JOB TIMELINE</h3>
                         <div className="relative border-l-2 border-slate-100 ml-2.5 space-y-6">
-                            {jobData.timeline.map((event: any, index: number) => (
+                            {jobData?.timeline.map((event: any, index: number) => (
                             <div key={index} className="relative pl-5">
                                 <div className={`absolute -left-[5px] top-1.5 w-2 h-2 rounded-full ring-4 ring-white ${
                                 event.completed ? 'bg-emerald-500' : 'bg-slate-300'

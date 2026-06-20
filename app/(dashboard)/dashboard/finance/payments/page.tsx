@@ -1,8 +1,9 @@
+import { UnderConstruction } from '@/components/dashboard/ui/UnderConstruction'
 import React from 'react'
 
 const page = () => {
   return (
-    <div>page</div>
+    <UnderConstruction />
   )
 }
 
