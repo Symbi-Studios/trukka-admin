@@ -1,4 +1,3 @@
-// Your client component
 import { getJobStatsAction, getPendingDocsAction, getJobsAction } from '@/app/actions/jobs';
 import JobMonitoringClient from './JobMonitoringClient';
 
@@ -10,14 +9,11 @@ export default async function JobMonitoringPage() {
     getJobsAction({ page: 1 })
   ]);
 
-
-  // console.log('jobs', pendingDocs)
-  // console.log('jobsData', initialJobs.data)
-
   return (
     <JobMonitoringClient 
-      initialStats={stats.data} 
-      // initialPendingDocs={pendingDocs.data.jobs || []} 
+      // Added optional chaining (?.) to prevent crashes if the server actions return undefined
+      initialStats={stats?.data || null} 
+      initialPendingDocs={pendingDocs?.data?.jobs || []} 
       initialJobsData={initialJobs?.data || { jobs: [], pagination: {} }}
     />
   );

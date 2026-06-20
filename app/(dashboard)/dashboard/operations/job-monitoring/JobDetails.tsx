@@ -9,6 +9,60 @@ const JobDetails = ({ jobId, onBack, onIntervene }: { jobId: string; onBack: () 
     const [jobData, setJobData] = useState<any>(null);
 
 
+   const isoString = jobData?.tdoDate;
+    // 1. Declare the variable outside the block
+    let formattedDate = "Loading date..."; 
+
+    // 2. Only run the formatting logic if the string is present
+    if (isoString) {
+    const date = new Date(isoString);
+    
+    const options: Intl.DateTimeFormatOptions = { 
+        weekday: 'short', 
+        month: 'long', 
+        day: 'numeric', 
+        year: 'numeric',
+        timeZone: 'UTC'
+    };
+
+    // 3. Ensure the parsed date timestamp is a valid number before formatting
+    if (!isNaN(date.getTime())) {
+        formattedDate = new Intl.DateTimeFormat('en-US', options).format(date);
+    } else {
+        formattedDate = "Invalid Date";
+    }
+    }
+
+
+
+    const containerInfo = [
+        {id:1, label: 'CONTAINER TYPE ', value: jobData?.container.type},
+        {id:2, label: 'CONTAINER SIZE ', value: jobData?.container.size},
+        {id:3, label: 'CONTAINER NUMBER ', value: jobData?.container.number},
+        {id:4, label: 'CONTAINER WEIGHT ', value: jobData?.container.cargoWeight},
+        {id:5, label: 'CONTAINER CONTENTS ', value: jobData?.container.cargoContents},
+        {id:6, label: 'TDO DATE ', value: formattedDate},
+    ]
+
+    const PickUpInfo = [
+        {id:1, label: 'PICKUP PORT ', value: jobData?.pickup.port},
+        {id:2, label: 'TERMINAL ', value: jobData?.pickup.terminal},
+        {id:3, label: 'DELIVERY ADDRESS ', value: jobData?.delivery.address},
+        {id:4, label: 'CONTAINER RETURN ADDRESS ', value: jobData?.containerReturnAddress},
+        // {id:5, label: 'EST DISTANCE ', value: 'NAN'},
+        // {id:6, label: 'EST TRIP TIME ', value: 'NAN'},
+    ]
+
+    const pricing = [
+        {id:1, label: 'AGREED PRICE', value: jobData?.pricing.agreedPrice},
+        {id:2, label: 'PLATFORM COMMISION', value: jobData?.pricing.platformFee},
+        {id:3, label: 'TRUCKER PAYOUT ', value: jobData?.pricing.truckerPayout},
+        {id:4, label: 'MOBILISATION FEE (30%) ', value: jobData?.pricing.mobilizationAmount},
+        {id:5, label: 'MOBILISATION PAID ', value: jobData?.pricing.mobilizationPaid},
+        {id:6, label: 'FINAL PAYOUT STATUS ', value: jobData?.pricing.finalPayoutStatus},
+    ]
+
+
     useEffect(() => {
         if (jobId) {
           setIsLoading(true);
@@ -46,7 +100,7 @@ const JobDetails = ({ jobId, onBack, onIntervene }: { jobId: string; onBack: () 
 
 
         {
-            isLoading || !jobData ? (
+            isLoading  ? (
             <div className="h-64 flex items-center justify-center">
               <Loader2 className="animate-spin text-blue-600 h-8 w-8" />
             </div> )
@@ -61,10 +115,10 @@ const JobDetails = ({ jobId, onBack, onIntervene }: { jobId: string; onBack: () 
                         {/* Pickup and delivery */}
                         <div >
                             <p className='font-bold text-xs'>PICKUP & DELIVERY</p>
-                            <div className='grid md:grid-cols-3 gap-2'>
-                            {[1,2,3,4,5,6].map((p, index) => (
+                            <div className='grid md:grid-cols-3 gap-2 '>
+                            {PickUpInfo.map((p, index) => (
                                 <div key={index}>
-                                    <DetailBox label='Pickup port' value='Apapa Port' />
+                                   <DetailBox label={p.label} value={p.value}/>
                                 </div>
                             ))}
                             </div>
@@ -74,9 +128,9 @@ const JobDetails = ({ jobId, onBack, onIntervene }: { jobId: string; onBack: () 
                         <div >
                             <p className='font-bold text-xs'>CONTAINER & CARGO</p>
                             <div className='grid md:grid-cols-3 gap-2'>
-                            {[1,2,3,4,5,6].map((p, index) => (
-                                <div key={index}>
-                                    <DetailBox label='Pickup port' value='Apapa Port' />
+                            {containerInfo.map(c => (
+                                <div key={c.id}>
+                                    <DetailBox label={c.label} value={c.value}/>
                                 </div>
                             ))}
                             </div>
@@ -86,9 +140,9 @@ const JobDetails = ({ jobId, onBack, onIntervene }: { jobId: string; onBack: () 
                         <div >
                             <p className='font-bold text-xs'>PRICING & PAYMENT</p>
                             <div className='grid md:grid-cols-3 gap-2'>
-                            {[1,2,3,4,5,6].map((p, index) => (
+                            {pricing.map((p, index) => (
                                 <div key={index}>
-                                    <DetailBox label='Pickup port' value='Apapa Port' />
+                                    <DetailBox label={p.label} value={p.value} />
                                 </div>
                             ))}
                             </div>
@@ -102,21 +156,33 @@ const JobDetails = ({ jobId, onBack, onIntervene }: { jobId: string; onBack: () 
                     <div className=' bg-white rounded-2xl py-6 px-3 '>
                         {/* role */}
                         <div>
-                            <UserRole firstName='firstName' lastName='LastNme' role='Forwarder' email='ccc@gmail.com' />
-                            <UserRole firstName='firstName' lastName='LastNme' role='Forwarder' email='ccc@gmail.com' />
-                            <UserRole firstName='firstName' lastName='LastNme' role='Forwarder' email='ccc@gmail.com' />
+                            {jobData.forwarder && <UserRole name={jobData?.forwarder.name} role='Forwarder' email={jobData?.forwarder.email} id={jobData?.forwarder.id} />}
+                            {jobData.trucker && <UserRole name={jobData?.trucker.name} role='Trucker' email={jobData?.trucker.email} id={jobData?.trucker.id} />}
+                            {jobData.driver && <UserRole name={jobData?.driver.name} role='Driver' email={jobData?.driver.email} id={jobData?.driver.id} />}
                         </div>
 
                         {/* docs */}
                         <div className='mt-7'>
                             <div className='flex justify-between items-center'>
                                 <p className='text-[#757575] font-bold text-sm'>DOCUMENTS</p>
-                                <p className='text-[#00652D] bg-[#E4FFF0] font-bold text-xs p-1'>Approved</p>
+                                <p className={`text-[#00652D] bg-[#E4FFF0] font-bold text-xs p-1 ${jobData?.documents.approvalStatus === 'Pending' && 'bg-amber-50 text-amber-600' || jobData?.documents.approvalStatus === 'Rejected' && 'bg-red-50 text-red-600' }`}>{jobData?.documents.approvalStatus}</p>
                             </div>
                             <div className='flex items-center gap-2 mt-2'>
-                                {['TDO', 'Exit Note', 'Gate Pass'].map((d, index) => (
-                                    <div key={index} className='border border-[#718097] rounded-lg text-xs font-bold px-3 py-1'>{d}</div>
-                                ))}
+                            {[
+                                { key: 'tdo', label: 'TDO' },
+                                { key: 'exitNote', label: 'Exit Note' },
+                                { key: 'gatePass', label: 'Gate Pass' }
+                            ]
+                                .filter(docConfig => jobData?.documents?.[docConfig.key as keyof typeof jobData.documents]?.url)
+                                .map((docConfig, index) => (
+                                <div 
+                                    key={index} 
+                                    className='border border-[#718097] rounded-lg text-xs font-bold px-3 py-1'
+                                >
+                                    {docConfig.label}
+                                </div>
+                                ))
+                            }
                             </div>
                             <div className='border border-[#0241E8] rounded-lg text-[#0241E8] text-sm text-center py-2 mt-3'>
                                 View
@@ -164,13 +230,13 @@ export default JobDetails
 
 
 const DetailBox = ({ label, value }: { label: string, value: string }) => (
-  <div className="bg-[#E8ECF1] p-3.5 rounded-xl border border-slate-100">
+  <div className="bg-[#E8ECF1] h-full p-3.5 rounded-xl border border-slate-100">
     <p className="text-[11px] font-bold text-slate-500 uppercase tracking-wide mb-1">{label}</p>
     <p className="text-[13px] font-semibold text-slate-800">{value}</p>
   </div>
 );
 
-const UserRole = ({ firstName, lastName, email, role }: { firstName: string, lastName: string, role: string, email: string }) => (
+const UserRole = ({ name,  email, role, id }: { name: string, role: string, email: string, id: string }) => (
   <div className="p-3.5">
     <p className='font-bold text-xs text-[#757575] mb-2'>{role}</p>
     <div className='flex  items-center justify-between gap-2'>
@@ -179,7 +245,7 @@ const UserRole = ({ firstName, lastName, email, role }: { firstName: string, las
                 DC
             </div>
             <div>
-                <p className="text-sm font-medium">{firstName} {lastName}</p>
+                <p className="text-sm font-medium">{name}</p>
                 <p className="text-xs text-[#718097] font-medium">{email}</p>
             </div>
         </div>

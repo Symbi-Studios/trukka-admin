@@ -28,7 +28,7 @@ export async function getJobStatsAction() {
 export async function getPendingDocsAction() {
   try {
     const res = await fetchWithAuth('/api/v1/admin/jobs/pending-docs');
-    console.log(res)
+   
     if (!res.ok) return { jobs: [] };
     return await res.json();
   } catch (error) {

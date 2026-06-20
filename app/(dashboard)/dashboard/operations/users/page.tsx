@@ -3,9 +3,9 @@ import UsersClient from './UsersClient';
 
 export default async function UsersPage() {
   // Fetch the initial payload for the default tab (Forwarders)
-  const initialRes = await getUsersAction('drivers', { status: 'All', page: 1 });
+  const initialRes = await getUsersAction('forwarders', { status: 'All', page: 1 });
 
-  console.log('initials', initialRes.data)
+  console.log('initialsUser', initialRes.data)
 
   return (
     <UsersClient 

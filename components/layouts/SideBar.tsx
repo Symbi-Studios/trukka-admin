@@ -8,6 +8,7 @@ import { usePathname } from 'next/navigation'
 
 export const SideBar = () => {
     const pathname = usePathname();
+    console.log(pathname)
     const {user, initials} = useAuth()
 
     return (
@@ -39,7 +40,7 @@ export const SideBar = () => {
                                     return (
                                         <li key={item.label}>
                                             <Link 
-                                                href={item.link} 
+                                                href={`${item.link}`} 
                                                 className={`flex items-center  py-2 rounded-lg transition-colors border-l-4 border-transparent
                                                     ${isActive 
                                                         ? 'bg-[#0241E814]' 

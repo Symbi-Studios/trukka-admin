@@ -37,10 +37,6 @@ export const StatusPill = ({ status }: { status?: string | null }) => {
 }
 
 
-
-// ==========================================
-// MAIN COMPONENT
-// ==========================================
 export default function UsersClient({ initialUsersData }: any) {
   const [activeTab, setActiveTab] = useState<UserRole>('Forwarders');
   const [activeFilter, setActiveFilter] = useState('All');
@@ -168,14 +164,14 @@ export default function UsersClient({ initialUsersData }: any) {
             </div>
             
             <div className='flex items-center gap-2 overflow-x-auto custom-scrollbar w-full pb-1'>
-              {['All', 'ACTIVE', 'PENDING_REVIEW', 'SUSPENDED'].map(f => (
+              {['All', 'ACTIVE', 'PENDING_PROFILE', 'PENDING_REVIEW', 'SUSPENDED', 'INACTIVE', 'BANNED'].map(f => (
                 <button key={f} 
                   onClick={() => {
                     setActiveFilter(f);
                     setCurrentPage(1); // Reset pagination on filter change
                   }}
                   className={`border h-8 px-4 rounded-full text-sm font-bold whitespace-nowrap transition-colors ${activeFilter === f ? 'text-white bg-[#0241E8] border-[#0241E8]' : 'text-slate-600 bg-white border-slate-300 hover:bg-slate-50'}`}>
-                  {f.replace('_', ' ')}
+                  {f.replace('_', ' ').charAt(0).toUpperCase() + f.replace('_', ' ').slice(1).toLowerCase()}
                 </button>
               ))}
             </div>

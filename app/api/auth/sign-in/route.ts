@@ -7,6 +7,8 @@ export async function POST (request:NextRequest){
     const {email, password} = await request.json();
     const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL;
 
+    
+
     try {
         const backendResponse = await fetch(`${BASE_URL}/api/v1/admin/auth/login`, {
             method: 'POST',
@@ -14,7 +16,11 @@ export async function POST (request:NextRequest){
             body: JSON.stringify({email, password})
         });
 
+        console.log(BASE_URL)
+
         const data = await backendResponse.json();
+
+        console.log('data', data)
 
 
         if(!backendResponse.ok){

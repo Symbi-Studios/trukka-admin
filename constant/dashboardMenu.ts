@@ -1,15 +1,11 @@
-import { 
-  LayoutDashboard, Home, BarChart3, 
-  Settings2, ClipboardList, Package, Truck,
-  Banknote, TrendingUp, TrendingDown, FileText,
-  Users, MessageSquare, Share2, Megaphone,
-  Lightbulb, PieChart, LineChart, Sparkles,
-  Cpu, Settings, UserCog, Terminal, 
+import {  Home,  FileText,
+  Users, MessageSquare, UserCog, 
   Briefcase,
   CreditCard,
   Bell,
   Cog,
-  ScrollText
+  ScrollText,
+  Download
 } from 'lucide-react';
 
 export const dashboard_menu = [
@@ -30,22 +26,23 @@ export const dashboard_menu = [
   {
     title: "Finance",
     items: [
-      { label: "Payments", link: "/finance/revenue", icon: CreditCard },
+      { label: "Payments", link: "/dashboard/finance/payments", icon: CreditCard },
+      { label: "Payouts", link: "/dashboard/finance/payouts", icon: Download },
     ]
   },
   {
     title: "Engagements",
     items: [
-      { label: "Feedback", link: "/engagements/social", icon: MessageSquare },
+      { label: "Feedback", link: "/dashboard/engagement/feedbacks", icon: MessageSquare },
     ]
   },
   {
     title: "System",
     items: [
-      { label: "Notifications", link: "/system/settings", icon: Bell },
-      { label: "Comms Hub", link: "/dashboard/system/users", icon: MessageSquare },
+      { label: "Notifications", link: "/dashboard/system/notification", icon: Bell },
+      { label: "Support", link: "/dashboard/system/support", icon: MessageSquare },
       { label: "Roles & Access", link: "/dashboard/system/row-access", icon: UserCog },
-      { label: "Global Settings", link: "/system/logs", icon: Cog }, 
+      { label: "Global Settings", link: "/dashboard/system/global-settings", icon: Cog }, 
       { label: "Audit Logs", link: "/dashboard/system/logs", icon: ScrollText } 
     ]
   }

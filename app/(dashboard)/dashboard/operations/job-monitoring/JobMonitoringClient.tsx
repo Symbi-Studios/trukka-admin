@@ -3,18 +3,17 @@
 import React, { useState, useEffect } from 'react';
 import { Search, ChevronDown, Loader2 } from 'lucide-react';
 import { HeaderMenu } from '@/components/layouts/HeaderMenu';
-import Link from 'next/link';
 import { getJobsAction } from '@/app/actions/jobs';
 import ViewJobModal from '@/components/modals/ViewJobModal';
 import InterveneModal from '@/components/modals/InterveneJobModal';
-import JobDetails from '@/components/dashboard/screen/JobDetails';
+import JobDetails from '@/app/(dashboard)/dashboard/operations/job-monitoring/JobDetails';
 
 // --- Types (Exported for modals) ---
 export type JobStatus = 'On track' | 'At risk' | 'Delayed' | 'Completed' | string;
 
 export default function JobMonitoringClient({ initialStats, initialPendingDocs, initialJobsData }: any) {
   // Primary Filter States
-  const [activeFilter, setActiveFilter] = useState('All');
+  const [activeFilter, setActiveFilter] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   
   // Secondary Filter States
@@ -91,7 +90,13 @@ export default function JobMonitoringClient({ initialStats, initialPendingDocs, 
     { label: 'COMPLETED', value: initialStats?.completed || 0, colorClass: 'text-emerald-500' },
   ];
 
-  const filterPills = ['All', 'Active', 'Delayed', 'At risk', 'Completed'];
+  const filterPills = [
+    { label: 'All', value: '' },
+    { label: 'Active', value: 'Active' },
+    { label: 'Delayed', value: 'Delayed' },
+    { label: 'At risk', value: 'AtRisk' },
+    { label: 'Completed', value: 'Completed' },
+  ];
 
   // Styling Helpers
   const getBadgeStyles = (statusLabel: string) => {
@@ -121,25 +126,35 @@ export default function JobMonitoringClient({ initialStats, initialPendingDocs, 
     return { text: `${freeDays} left`, state: 'good', color: 'text-emerald-600' };
   };
 
+
+   if (!initialJobsData  || !initialStats) {
+      return (
+        <div className="min-h-screen bg-slate-100/50 pb-10">
+          <HeaderMenu title="Job Monitoring" label="Jobs " />
+          <div className="p-6 text-center text-slate-500 font-medium">
+            Failed to load dashboard. Please refresh the page.
+          </div>
+        </div>
+      );
+    }
+
   return (
     <div className="min-h-screen bg-slate-100/50 pb-10">
-      <HeaderMenu title="Job Monitoring" label="Operations > Jobs" />
+      <HeaderMenu title="Job Monitoring" label="Jobs" />
 
       {
         selectedJobId 
         ? <JobDetails 
           jobId={selectedJobId} 
           onBack={() => setSelectedJobId(null)}
-           onIntervene={() => {
-          // It is safer to capture the ID in a variable before clearing the state 
-          // to ensure the timeout doesn't grab a stale null value.
-          const idToIntervene = selectedJobId;
-          setSelectedJobId(null);
-          
-          setTimeout(() => {
-            setJobToIntervene(idToIntervene);
-          }, 200);
-        }}  />
+          onIntervene={() => {
+            const idToIntervene = selectedJobId;
+            setSelectedJobId(null);
+            
+            setTimeout(() => {
+              setJobToIntervene(idToIntervene);
+            }, 200);
+          }}  />
         : (
           <div className="p-4 sm:p-6  mx-auto space-y-6">
         
@@ -236,14 +251,18 @@ export default function JobMonitoringClient({ initialStats, initialPendingDocs, 
 
               <div className='flex items-center gap-3 flex-[70%] overflow-x-auto custom-scrollbar pb-1'>
                 <div className='flex items-center gap-2'>
-                  {filterPills.map(f => (
-                    <div key={f}
-                      onClick={() => handleFilterChange(f)}
+                  {filterPills.map((filter) => (
+                    <div
+                      key={filter.label}
+                      onClick={() => handleFilterChange(filter.value)}
                       className={`border cursor-pointer h-8 px-4 rounded-full text-sm font-bold flex items-center justify-center transition-colors whitespace-nowrap ${
-                        activeFilter === f
+                        activeFilter === filter.value
                           ? 'text-white bg-[#0241E8] border-[#0241E8]'
                           : 'text-[#4F4F4F] bg-white border-[#BDBDBD] hover:bg-gray-50'
-                      }`}>{f}</div>
+                      }`}
+                    >
+                      {filter.label}
+                    </div>
                   ))}
                 </div>
               </div>
