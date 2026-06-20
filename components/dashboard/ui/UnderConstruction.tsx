@@ -10,8 +10,8 @@ interface UnderConstructionProps {
 }
 
 export const UnderConstruction = ({ 
-  title = "Page Under Construction", 
-  message = "We are currently building this feature. Check back soon for updates!" 
+  title = "Page In progress", 
+  message = "We Are Finalizing Endpoints." 
 }: UnderConstructionProps) => {
   const router = useRouter();
 
