@@ -98,7 +98,7 @@ export default function NotificationClient({ initialData }: any) {
     <div className="min-h-screen bg-slate-50/50 pb-10">
       <HeaderMenu title='Notification Center' label='Notifications' />
 
-      <div className='p-5 max-w-5xl mx-auto'>
+      <div className='p-5 mx-auto'>
         
         {/* Filters & Actions Header */}
         <div className='flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-5'>

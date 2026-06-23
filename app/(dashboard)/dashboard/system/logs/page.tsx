@@ -128,6 +128,7 @@ export default function AuditLogsPage() {
                   <th className="px-6 py-4">Action</th>
                   <th className="px-6 py-4">Entity</th>
                   <th className="px-6 py-4">Result</th>
+                  <th className="px-6 py-4">Note</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
@@ -173,6 +174,11 @@ export default function AuditLogsPage() {
                           Success
                         </span>
                       )}
+                    </td>
+
+                    {/* Note */}
+                    <td className="px-6 py-4 text-slate-600">
+                      -
                     </td>
                   </tr>
                 ))}
