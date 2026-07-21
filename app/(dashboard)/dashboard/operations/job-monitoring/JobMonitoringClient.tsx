@@ -7,6 +7,8 @@ import { getJobsAction } from '@/app/actions/jobs';
 import ViewJobModal from '@/components/modals/ViewJobModal';
 import InterveneModal from '@/components/modals/InterveneJobModal';
 import JobDetails from '@/app/(dashboard)/dashboard/operations/job-monitoring/JobDetails';
+import Link from 'next/link';
+import LoadiingSpiner from '@/components/LoadiingSpiner';
 
 // --- Types (Exported for modals) ---
 export type JobStatus = 'On track' | 'At risk' | 'Delayed' | 'Completed' | string;
@@ -14,6 +16,7 @@ export type JobStatus = 'On track' | 'At risk' | 'Delayed' | 'Completed' | strin
 export default function JobMonitoringClient({ initialStats, initialPendingDocs, initialJobsData }: any) {
   // Primary Filter States
   const [activeFilter, setActiveFilter] = useState('');
+
   const [searchQuery, setSearchQuery] = useState('');
   
   // Secondary Filter States
@@ -149,7 +152,6 @@ export default function JobMonitoringClient({ initialStats, initialPendingDocs, 
           onBack={() => setSelectedJobId(null)}
           onIntervene={() => {
             const idToIntervene = selectedJobId;
-            setSelectedJobId(null);
             
             setTimeout(() => {
               setJobToIntervene(idToIntervene);
@@ -173,7 +175,7 @@ export default function JobMonitoringClient({ initialStats, initialPendingDocs, 
           </div>
 
           {/* Documents Awaiting Review Banner */}
-          {/* {initialPendingDocs.length > 0 && (
+          {initialPendingDocs.length > 0 && (
             <div className="bg-amber-50/40 border border-amber-200 rounded-xl p-4 sm:p-6">
               <div className="flex justify-between items-center mb-4">
                 <h2 className="text-[14px] sm:text-[15px] font-bold text-slate-800">
@@ -229,7 +231,7 @@ export default function JobMonitoringClient({ initialStats, initialPendingDocs, 
                 })}
               </div>
             </div>
-          )} */}
+          )}
 
           {/* Main Data Table Area */}
           <div className="bg-white border border-slate-200 rounded-xl shadow-sm min-h-[400px] flex flex-col">
@@ -306,18 +308,6 @@ export default function JobMonitoringClient({ initialStats, initialPendingDocs, 
                   className="w-full bg-white border border-slate-200 text-slate-700 text-sm rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500" 
                 />
               </div>
-
-              {/* Ignored/Disabled visual placeholder per request */}
-              {/* <div className="space-y-1.5 opacity-50 pointer-events-none">
-                <label className="text-[11px] font-bold text-slate-400 tracking-wider uppercase">Free Days</label>
-                <div className="relative">
-                  <select className="w-full appearance-none bg-white border border-slate-200 text-slate-700 text-sm rounded-lg px-3 py-2">
-                    <option>Any</option>
-                  </select>
-                  <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 pointer-events-none" />
-                </div>
-              </div> */}
-
             </div>
 
             {/* Table */}
@@ -337,13 +327,13 @@ export default function JobMonitoringClient({ initialStats, initialPendingDocs, 
                 </thead>
                 <tbody className="divide-y divide-slate-100">
                   {isLoadingJobs ? (
-                    <tr><td colSpan={8} className="text-center py-8"><Loader2 className="w-6 h-6 animate-spin mx-auto text-blue-600" /></td></tr>
+                    <tr><td colSpan={8} className="text-center py-8"><LoadiingSpiner /></td></tr>
                   ) : jobsData.length === 0 ? (
                     <tr><td colSpan={8} className="text-center py-8 text-slate-500">No jobs found matching criteria.</td></tr>
                   ) : (
                     jobsData.map((job: any) => {
                       const freeDaysMeta = getFreeDaysDisplay(job.freeDays);
-                      const isDanger = job.statusLabel === 'Delayed' || job.statusLabel === 'At risk';
+                      // const isDanger = job.statusLabel === 'Delayed' || job.statusLabel === 'At risk';
                       
                       return (
                         <tr key={job.id} className={`transition-colors ${job.statusLabel === 'Delayed' ? 'bg-red-50/30 hover:bg-red-50/50' : 'hover:bg-slate-50/50'}`}>
@@ -370,14 +360,14 @@ export default function JobMonitoringClient({ initialStats, initialPendingDocs, 
                             >
                               View
                             </button>
-                            {isDanger && (
+                            {/* {isDanger && (
                               <button 
                                 onClick={() => setJobToIntervene(job.id)}
                                 className="px-3 py-1.5 text-xs font-semibold bg-white border rounded-lg transition-colors text-slate-600 border-slate-200 hover:bg-slate-50"
                               >
                                 Intervene
                               </button>
-                            )}
+                            )} */}
                           </td>
                         </tr>
                       )

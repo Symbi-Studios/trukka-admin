@@ -12,6 +12,7 @@ import {
   rejectDocAction
 } from '@/app/actions/doc-review';
 import { DocumentReviewModal } from '@/components/modals/DocumentReviewModal';
+import LoadiingSpiner from '@/components/LoadiingSpiner';
 
 // ==========================================
 // TYPES & HELPERS
@@ -212,7 +213,7 @@ export default function DocReviewClient({ initialStats, initialQueue, initialTru
 
           <div className='flex flex-col flex-1'>
             {isLoading ? (
-              <div className="flex-1 flex items-center justify-center py-12"><Loader2 className="animate-spin text-blue-600 h-8 w-8" /></div>
+              <div className="flex-1 flex items-center justify-center py-12"><LoadiingSpiner /></div>
             ) : activeTab === 'Document Queue' ? (
               queueData.length === 0 ? (
                 <div className="text-center py-12 text-slate-500">No documents found.</div>

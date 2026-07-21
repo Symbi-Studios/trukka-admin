@@ -7,6 +7,8 @@ export const DocumentReviewModal = ({ jobId, onClose, onRefresh }: { jobId: stri
   const [data, setData] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showRejectModal, setShowRejectModal] = useState(false);
+  const [rejectReason, setRejectReason] = useState("");
 
   useEffect(() => {
     if (jobId) {
@@ -26,21 +28,30 @@ export const DocumentReviewModal = ({ jobId, onClose, onRefresh }: { jobId: stri
     }
   }, [jobId]);
 
-  const handleAction = async (type: 'approve' | 'reject') => {
+  // Replace the old handleAction with these two functions
+  const handleApprove = async () => {
     if (!jobId) return;
-    let reason = '';
-    
-    if (type === 'reject') {
-      const input = window.prompt("Enter reason for rejection:");
-      if (!input) return;
-      reason = input;
-    }
-
     setIsSubmitting(true);
-    const res = type === 'approve' ? await approveDocAction(jobId) : await rejectDocAction(jobId, reason);
+    const res = await approveDocAction(jobId);
     setIsSubmitting(false);
     
     if (res.success) {
+      onRefresh();
+      onClose();
+    } else {
+      alert(res.message);
+    }
+  };
+
+  const submitRejection = async () => {
+    if (!jobId || !rejectReason.trim()) return;
+    setIsSubmitting(true);
+    const res = await rejectDocAction(jobId, rejectReason);
+    setIsSubmitting(false);
+    
+    if (res.success) {
+      setShowRejectModal(false);
+      setRejectReason("");
       onRefresh();
       onClose();
     } else {
@@ -76,8 +87,8 @@ export const DocumentReviewModal = ({ jobId, onClose, onRefresh }: { jobId: stri
                   <p className="text-sm text-gray-500 mt-0.5">{data.container}</p>
                 </div>
                 <span className={`px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1.5 ${
-                  data.statusLabel === 'On track' ? 'bg-[#E6F7ED] text-[#01AC4E]' : 
-                  data.statusLabel === 'At risk' ? 'bg-[#FFF8EB] text-[#FFBA2F]' : 'bg-[#FDECEB] text-[#EB3A32]'
+                  data.status === 'awaiting' ? 'bg-[#E6F7ED] text-[#01AC4E]' : 
+                  data.status === 'completed' ? 'bg-[#FFF8EB] text-[#FFBA2F]' : 'bg-[#FDECEB] text-[#EB3A32]'
                 }`}>
                   <span className={`w-1.5 h-1.5 rounded-full ${data.statusLabel === 'On track' ? 'bg-[#01AC4E]' : data.statusLabel === 'At risk' ? 'bg-[#FFBA2F]' : 'bg-[#EB3A32]'}`}></span>
                   {data.statusLabel}
@@ -121,8 +132,8 @@ export const DocumentReviewModal = ({ jobId, onClose, onRefresh }: { jobId: stri
               <div className="border-t border-gray-200 px-6 py-4 flex justify-between items-center bg-white">
                 <button onClick={onClose} disabled={isSubmitting} className="border border-gray-300 text-gray-700 px-5 py-2 rounded-lg text-sm font-bold hover:bg-gray-50 transition-colors disabled:opacity-50">Close</button>
                 <div className="flex gap-3">
-                  <button onClick={() => handleAction('reject')} disabled={isSubmitting} className="border border-[#EB3A32] text-[#EB3A32] px-5 py-2 rounded-lg text-sm font-bold hover:bg-red-50 transition-colors disabled:opacity-50">Reject</button>
-                  <button onClick={() => handleAction('approve')} disabled={isSubmitting} className="bg-[#01AC4E] text-white px-5 py-2 rounded-lg text-sm font-bold hover:bg-green-600 transition-colors flex items-center gap-2">
+                  <button onClick={() => setShowRejectModal(true)} disabled={isSubmitting} className="border border-[#EB3A32] text-[#EB3A32] px-5 py-2 rounded-lg text-sm font-bold hover:bg-red-50 transition-colors disabled:opacity-50">Reject</button>
+                  <button onClick={handleApprove} disabled={isSubmitting} className="bg-[#01AC4E] text-white px-5 py-2 rounded-lg text-sm font-bold hover:bg-green-600 transition-colors flex items-center gap-2">
                     {isSubmitting && <Loader2 size={14} className="animate-spin" />}
                     Approve
                   </button>
@@ -132,6 +143,57 @@ export const DocumentReviewModal = ({ jobId, onClose, onRefresh }: { jobId: stri
           </>
         )}
       </div>
+      
+      {showRejectModal && (
+        <div className="fixed inset-0 z-60 flex items-center justify-center bg-slate-900/40 backdrop-blur-sm p-4">
+          <div className="bg-white w-full max-w-md rounded-2xl shadow-xl overflow-hidden flex flex-col">
+            
+            {/* Header */}
+            <div className="px-6 py-4 flex justify-between items-start border-b border-gray-100 border-t-4 border-t-transparent">
+              <div>
+                <h2 className="text-lg font-bold text-gray-900">Reject Documents</h2>
+                <p className="text-sm text-gray-500 mt-1">Reject documents by {data?.forwarderName}</p>
+              </div>
+              <button 
+                onClick={() => setShowRejectModal(false)} 
+                className="p-2 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
+              >
+                <X size={16} className="text-gray-600" />
+              </button>
+            </div>
+
+            {/* Body */}
+            <div className="p-6">
+              <label className="block text-sm text-gray-800 mb-2">Reason for rejection</label>
+              <textarea
+                value={rejectReason}
+                onChange={(e) => setRejectReason(e.target.value)}
+                placeholder="Reason for rejection"
+                className="w-full border border-gray-300 rounded-xl p-3 h-32 resize-none focus:outline-none focus:ring-1 focus:ring-[#0241E8] text-sm"
+              ></textarea>
+            </div>
+
+            {/* Footer */}
+            <div className="px-6 py-4 flex justify-end gap-3 border-t border-gray-100">
+              <button
+                onClick={() => setShowRejectModal(false)}
+                className="px-5 py-2 border border-gray-300 rounded-lg text-sm font-bold text-gray-600 hover:bg-gray-50 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={submitRejection}
+                disabled={isSubmitting || !rejectReason.trim()}
+                className="px-5 py-2 border border-[#EB3A32] text-[#EB3A32] rounded-lg text-sm font-bold hover:bg-red-50 transition-colors flex items-center gap-2 disabled:opacity-50"
+              >
+                {isSubmitting && <Loader2 size={14} className="animate-spin" />}
+                Reject
+              </button>
+            </div>
+            
+          </div>
+        </div>
+      )}
     </div>
   );
 }
