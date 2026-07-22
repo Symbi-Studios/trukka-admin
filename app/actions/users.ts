@@ -14,10 +14,22 @@ export async function getUsersAction(role: 'forwarders' | 'truckers' | 'drivers'
     const res = await fetchWithAuth(`/api/v1/admin/users/${role}?${params.toString()}`);
     if (!res.ok) return { success: false, data: { users: [], pagination: {} } };
     const data = await res.json();
-    console.log('data', data.data)
+    // console.log('data', data.data)
     return { success: data.success, data: data.data };
   } catch (error) {
     return { success: false, data: { users: [], pagination: {} } };
+  }
+}
+
+export async function getUserStats(){
+  try {
+    const res = await fetchWithAuth('/api/v1/admin/users/stats');
+    if(!res.ok) return {success: false};
+    const data = await res.json();
+    return { success: true, data: data.data };
+  } catch (error) {
+    console.error('failded to fetch user stats', error);
+    return { success: false, data: null};
   }
 }
 
@@ -83,4 +95,50 @@ export async function reviewLicenseAction(userId: string, decision: 'approve' | 
   const body = decision === 'reject' ? JSON.stringify({ reason }) : undefined;
   const res = await fetchWithAuth(`/api/v1/admin/users/${userId}/${decision}-license`, { method: 'POST', body });
   return { success: res.ok };
+}
+
+
+
+// --- Sub-Resources (Jobs, Transactions, Destinations) ---
+
+export async function getUserSavedDestinationsAction(userId: string) {
+  try {
+    const res = await fetchWithAuth(`/api/v1/admin/users/${userId}/saved-destinations`);
+    if (!res.ok) return { success: false, data: null };
+    const data = await res.json();
+    return { success: data.success, data: data.data };
+  } catch (error) {
+    return { success: false, data: null };
+  }
+}
+
+export async function getUserJobsAction(userId: string, filters: { tab?: string, page?: number, limit?: number }) {
+  try {
+    const params = new URLSearchParams();
+    if (filters.tab && filters.tab !== 'All') params.append('tab', filters.tab.toLowerCase());
+    params.append('page', (filters.page || 1).toString());
+    params.append('limit', (filters.limit || 20).toString());
+
+    const res = await fetchWithAuth(`/api/v1/admin/users/${userId}/jobs?${params.toString()}`);
+    if (!res.ok) return { success: false, data: { jobs: [], pagination: {} } };
+    const data = await res.json();
+    return { success: data.success, data: data.data };
+  } catch (error) {
+    return { success: false, data: { jobs: [], pagination: {} } };
+  }
+}
+
+export async function getUserTransactionsAction(userId: string, filters: { page?: number, limit?: number }) {
+  try {
+    const params = new URLSearchParams();
+    params.append('page', (filters.page || 1).toString());
+    params.append('limit', (filters.limit || 20).toString());
+
+    const res = await fetchWithAuth(`/api/v1/admin/users/${userId}/transactions?${params.toString()}`);
+    if (!res.ok) return { success: false, data: { transactions: [], pagination: {} } };
+    const data = await res.json();
+    return { success: data.success, data: data.data };
+  } catch (error) {
+    return { success: false, data: { transactions: [], pagination: {} } };
+  }
 }

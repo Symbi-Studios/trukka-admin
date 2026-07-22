@@ -1,9 +1,14 @@
 'use client'
 
-import { ArrowLeft, Loader2, FileText, Search, MapPinPlusInside } from "lucide-react";
+import { ArrowLeft, Loader2, FileText, Search, MapPinPlusInside, X } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { getUserProfileAction } from "@/app/actions/users";
+import { 
+  getUserProfileAction, 
+  getUserSavedDestinationsAction, 
+  getUserJobsAction, 
+  getUserTransactionsAction 
+} from "@/app/actions/users";
 import { StatusPill } from "@/app/(dashboard)/dashboard/operations/users/UsersClient";
 import { VerificationModal } from "@/components/modals/VerificationModal";
 
@@ -28,6 +33,40 @@ const formatDate = (isoString: string) => {
   if (!isoString) return '—';
   const date = new Date(isoString);
   return date.toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false });
+};
+
+
+// --- Custom Job Status Pill ---
+const JobStatusPill = ({ status }: { status: string }) => {
+  const s = (status || '').toUpperCase();
+  
+  if (s === 'COMPLETED') {
+    return (
+      <span className="inline-flex items-center px-3 py-1 rounded-full text-[13px] font-medium bg-[#EBF0FF] text-[#0241E8]">
+        <span className="w-1.5 h-1.5 rounded-full bg-[#0241E8] mr-2"></span>Completed
+      </span>
+    );
+  }
+  if (s === 'CANCELLED') {
+    return (
+      <span className="inline-flex items-center px-3 py-1 rounded-full text-[13px] font-medium bg-[#FDECEB] text-[#EB3A32]">
+        <span className="w-1.5 h-1.5 rounded-full bg-[#EB3A32] mr-2"></span>Cancelled
+      </span>
+    );
+  }
+  // Default to Active / On track
+  return (
+    <span className="inline-flex items-center px-3 py-1 rounded-full text-[13px] font-medium bg-[#E6F7ED] text-[#01AC4E]">
+      <span className="w-1.5 h-1.5 rounded-full bg-[#01AC4E] mr-2"></span>On track
+    </span>
+  );
+};
+
+// Helper for 'Jun 12' date format
+const formatShortDate = (isoString?: string) => {
+  if (!isoString) return '—';
+  const date = new Date(isoString);
+  return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
 };
 
 const StatCard = ({ title, value, change, valueClass = "text-slate-900" }: any) => (
@@ -55,17 +94,15 @@ export const UserDetails = ({ userId, onBack }: { userId: string; onBack: () => 
 
   const fetchProfile = async () => {
     setLoading(true);
-    // In a real scenario, this fetches the mapped JSON provided
     const res = await getUserProfileAction(userId);
     if (res.success) setProfile(res.data);
-    console.log('detaisl', res.data)
     setLoading(false);
   };
 
   useEffect(() => { fetchProfile(); }, [userId]);
 
   if (loading || !profile) {
-    return <div className="flex justify-center py-20"><Loader2 className="animate-spin text-blue-600 w-8 h-8" /></div>;
+    return <div className="flex justify-center py-20"><Loader2 className="animate-spin text-[#0241E8] w-8 h-8" /></div>;
   }
 
   const role = profile.role; // "FORWARDER", "TRUCKER", "DRIVER"
@@ -73,7 +110,7 @@ export const UserDetails = ({ userId, onBack }: { userId: string; onBack: () => 
   const isForwarder = role === 'FORWARDER';
   const isDriver = role === 'DRIVER';
   
-  // Determine available tabs based on Role (Matches Capture 2.PNG, Capture 5.PNG, Capture 11.PNG)
+  // Determine available tabs based on Role
   let tabs = ['Details'];
   if (isForwarder) tabs.push('Saved Destinations', 'Job History', 'Transaction History');
   if (isTrucker) tabs.push('Truck Information', 'Job History', 'Transaction History');
@@ -87,7 +124,7 @@ export const UserDetails = ({ userId, onBack }: { userId: string; onBack: () => 
   const totalMoneyChange = profile.totalSpent?.changeThisWeek || profile.totalEarned?.changeThisWeek || 0;
 
   return (
-    <div className="p-5  mx-auto font-sans">
+    <div className="p-5 max-w-[1400px] mx-auto font-sans">
       
       {/* Breadcrumb & Back */}
       <div className="flex items-center gap-4 mb-6">
@@ -157,10 +194,10 @@ export const UserDetails = ({ userId, onBack }: { userId: string; onBack: () => 
       <div className="mb-10">
         {activeTab === 'Details' && <DetailsTab profile={profile} onOpenModal={setModalType} />}
         {activeTab === 'Truck Information' && <TruckInfoTab trucks={profile.trucks || []} verification={profile.verification} />}
-        {activeTab === 'Saved Destinations' && <SavedDestinationsTab />}
-        {activeTab === 'Job History' && <JobHistoryTab />}
-        {activeTab === 'Transaction History' && <TransactionHistoryTab role={role} />}
-        {activeTab === 'Truck & Company Information' && <DetailsTab profile={profile} onOpenModal={setModalType} />} {/* Fallback for driver */}
+        {activeTab === 'Saved Destinations' && <SavedDestinationsTab userId={userId} />}
+        {activeTab === 'Job History' && <JobHistoryTab userId={userId} role={role} />}
+        {activeTab === 'Transaction History' && <TransactionHistoryTab userId={userId} role={role} />}
+        {activeTab === 'Truck & Company Information' && <DetailsTab profile={profile} onOpenModal={setModalType} />}
       </div>
 
       <VerificationModal type={modalType} userId={userId} onClose={() => setModalType(null)} onRefresh={fetchProfile} />
@@ -184,11 +221,11 @@ const DetailsTab = ({ profile, onOpenModal }: { profile: any, onOpenModal: (type
         <div className="mt-4">
           {isCompany ? (
             <>
-              <InfoRow label="Business Name" value={profile.name} />
+              <InfoRow label="Business Name" value={details.company?.businessName || profile.name} />
               <InfoRow label="Business CAC Number" value={details.company?.cacNumber || '—'} />
-              <InfoRow label="Business Address" value={details.company?.address || '—'} />
-              <InfoRow label="Tax Identification Number" value={details.company?.tin || '—'} />
-              <InfoRow label="Phone Number" value={profile.phone} />
+              <InfoRow label="Business Address" value={details.company?.businessAddress || '—'} />
+              <InfoRow label="Tax Identification Number" value={details.company?.taxId || '—'} />
+              <InfoRow label="Phone Number" value={details.company?.phone || profile.phone} />
             </>
           ) : (
             <>
@@ -217,57 +254,148 @@ const DetailsTab = ({ profile, onOpenModal }: { profile: any, onOpenModal: (type
 };
 
 const TruckInfoTab = ({ trucks, verification }: { trucks: any[], verification?: any }) => {
+  const [isDocModalOpen, setIsDocModalOpen] = useState(false);
+
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-      <div className="lg:col-span-2 space-y-4">
-        <div className="flex justify-between items-center mb-2">
-          <h3 className="font-bold text-slate-800">Truck information</h3>
-          <span className="text-xs font-bold text-[#0241E8] bg-[#E1E9FF] px-3 py-1 rounded-full">{trucks.length} truck{trucks.length !== 1 && 's'}</span>
-        </div>
-        
-        {trucks.map((t: any) => (
-          <div key={t.id} className="bg-white border border-slate-200 rounded-xl p-5">
-            <div className="flex justify-between items-start mb-2">
-              <div>
-                <h4 className="font-bold text-[#0241E8] text-lg">{t.plateNumber}</h4>
-                <p className="text-sm text-slate-500 mt-1">{t.containerType} • {t.containerSize}</p>
-              </div>
-              <span className="text-xs font-bold text-green-600 bg-green-50 border border-green-100 px-3 py-1 rounded-full">Approved</span>
-            </div>
-            
-            <div className="grid grid-cols-2 gap-4 mt-4">
-              <div className="bg-[#F8F9FB] rounded-lg p-4">
-                <p className="text-[11px] font-bold text-slate-500 uppercase">Container Weight</p>
-                <p className="text-lg font-bold text-slate-800 mt-1">{t.containerWeight} tons</p>
-              </div>
-              <div className="bg-[#F8F9FB] rounded-lg p-4">
-                <p className="text-[11px] font-bold text-slate-500 uppercase">Year</p>
-                <p className="text-lg font-bold text-slate-800 mt-1">{t.year}</p>
-              </div>
-            </div>
+      
+      {/* Truck List Section */}
+      <div className="lg:col-span-2">
+        <div className="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm">
+          
+          {/* Header */}
+          <div className="flex justify-between items-center p-5 border-b border-slate-100">
+            <h3 className="font-bold text-slate-900 text-[14px]">Truck information</h3>
+            <span className="text-xs font-bold text-[#0241E8] bg-[#EBF0FF] px-3 py-1 rounded-full">
+              {trucks.length} truck{trucks.length !== 1 && 's'}
+            </span>
           </div>
-        ))}
-        {trucks.length === 0 && <p className="text-sm text-slate-500">No trucks linked to this account.</p>}
+          
+          {/* Truck Items */}
+          <div className="divide-y divide-slate-100">
+            {trucks.map((t: any) => (
+              <div key={t.id} className="p-6">
+                <div className="flex justify-between items-start mb-1">
+                  <h4 className="font-bold text-[#0241E8] text-[15px] tracking-wide">
+                    {t.plateNumber}
+                  </h4>
+                  <span className={`text-[11px] font-bold px-3 py-1 rounded-full ${
+                    t.status === 'APPROVED' || !t.status 
+                      ? 'text-[#01AC4E] bg-[#E6F7ED]' 
+                      : 'text-amber-600 bg-amber-50'
+                  }`}>
+                    {t.status ? t.status.charAt(0).toUpperCase() + t.status.slice(1).toLowerCase() : 'Approved'}
+                  </span>
+                </div>
+                
+                <p className="text-[13px] text-slate-500 font-medium mb-4">
+                  {t.containerType || 'Container Truck'} • {t.containerSize || '40ft'}
+                </p>
+                
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="bg-[#EEF1F6] rounded-xl p-4">
+                    <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
+                      Container Weight
+                    </p>
+                    <p className="text-[14px] font-medium text-slate-900 mt-1.5">
+                      {t.containerWeight || '30'} tons
+                    </p>
+                  </div>
+                  <div className="bg-[#EEF1F6] rounded-xl p-4">
+                    <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
+                      Year
+                    </p>
+                    <p className="text-[14px] font-medium text-slate-900 mt-1.5">
+                      {t.year || '2018'}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            ))}
+
+            {trucks.length === 0 && (
+              <p className="text-sm text-slate-500 p-8 text-center">No trucks linked to this account.</p>
+            )}
+          </div>
+
+        </div>
       </div>
 
-      {verification?.driverLicense && (
-        <div className="bg-white border border-slate-200 rounded-xl p-6 h-fit">
+      {/* Verification Sidebar */}
+      {verification?.kycStatus && (
+        <div className="bg-white border border-slate-200 rounded-xl p-6 h-fit shadow-sm">
           <div className="flex justify-between items-center mb-6">
-            <h3 className="font-bold text-slate-800">Verification & Information</h3>
-            <span className="text-xs font-bold text-green-600 bg-green-50 border border-green-100 px-3 py-1 rounded-full">• Verified</span>
+            <h3 className="font-bold text-slate-800 text-[14px]">Verification & Information</h3>
+            <span className={`text-[11px] font-bold px-2.5 py-1 rounded-full ${
+              verification.kycStatus === 'VERIFIED' 
+                ? 'text-[#01AC4E] bg-[#E6F7ED]' 
+                : 'text-amber-600 bg-amber-50'
+            }`}>
+              • {verification.kycStatus}
+            </span>
           </div>
           
           <div className="flex justify-between items-center p-4 border border-slate-100 rounded-lg">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-slate-100 flex items-center justify-center rounded-lg text-slate-500">
+              <div className="w-10 h-10 bg-slate-50 flex items-center justify-center rounded-lg text-slate-500">
                 <FileText size={20} />
               </div>
               <div>
-                <p className="font-bold text-sm text-slate-800">Driver's License</p>
-                <span className="text-[10px] font-bold text-green-600 bg-green-50 px-2 py-0.5 rounded uppercase mt-1 inline-block">Verified</span>
+                <p className="font-bold text-[13px] text-slate-800">Driver’s License</p>
+                <span className={`text-[10px] font-bold px-2 py-0.5 rounded uppercase mt-1 inline-block ${
+                  verification.kycStatus === 'VERIFIED' 
+                    ? 'text-[#01AC4E] bg-[#E6F7ED]' 
+                    : 'text-amber-600 bg-amber-50'
+                }`}>
+                  {verification.kycStatus}
+                </span>
               </div>
             </div>
-            <button className="text-[#0241E8] border border-slate-200 hover:border-[#0241E8] px-4 py-1.5 rounded-lg text-xs font-bold transition-colors">View</button>
+            {/* Added onClick handler to open modal */}
+            <button 
+              onClick={() => setIsDocModalOpen(true)}
+              className="text-[#0241E8] border border-slate-200 hover:border-[#0241E8] hover:bg-blue-50 px-4 py-1.5 rounded-lg text-xs font-bold transition-colors"
+            >
+              View
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* --- Simple Document Modal --- */}
+      {isDocModalOpen && verification?.driverLicense && (
+        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+            
+            {/* Modal Header */}
+            <div className="px-6 py-4 border-b border-slate-100 flex justify-between items-center">
+              <h2 className="text-lg font-bold text-slate-900">Driver's License</h2>
+              <button 
+                onClick={() => setIsDocModalOpen(false)} 
+                className="p-2 bg-slate-50 text-slate-500 rounded-lg hover:bg-slate-100 hover:text-slate-700 transition-colors"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            {/* Modal Body (Image & Details) */}
+            <div className="p-6 bg-slate-50 space-y-4">
+              <div className="w-full h-auto max-h-[60vh] overflow-hidden rounded-xl border border-slate-200 bg-white flex justify-center items-center">
+                <img 
+                  src={verification.driverLicense.licenseUrl} 
+                  alt="Driver License Document" 
+                  className="w-full h-full object-contain"
+                />
+              </div>
+
+              <div className="bg-white border border-slate-200 rounded-lg p-4 flex justify-between items-center">
+                <span className="text-sm font-medium text-slate-500">License Number:</span>
+                <span className="text-sm font-bold text-slate-900">
+                  {verification.driverLicense.licenseNumber || 'N/A'}
+                </span>
+              </div>
+            </div>
+
           </div>
         </div>
       )}
@@ -275,61 +403,245 @@ const TruckInfoTab = ({ trucks, verification }: { trucks: any[], verification?: 
   );
 };
 
-// Placeholder tabs based on images (Job History, Transactions, Destinations)
-const JobHistoryTab = () => (
-  <div className="bg-white border border-slate-200 rounded-xl">
-    <div className="p-4 border-b border-slate-200 flex flex-col sm:flex-row gap-4 justify-between items-center">
-      <div className="flex items-center px-3 py-2 border border-slate-300 rounded-lg w-full sm:w-80">
-        <Search size={16} className="text-slate-400 mr-2" />
-        <input type="text" placeholder="Search job ID, route, trucker..." className="bg-transparent text-sm w-full outline-none" />
-      </div>
-      <div className="flex gap-2 bg-slate-50 p-1 rounded-lg">
-        {['All', 'Active', 'Completed', 'Cancelled'].map(f => (
-          <button key={f} className={`px-4 py-1.5 text-sm font-bold rounded-md ${f === 'All' ? 'bg-[#0241E8] text-white' : 'text-slate-600 hover:bg-slate-200'}`}>{f}</button>
-        ))}
-      </div>
-    </div>
-    <div className="p-10 text-center text-slate-500 text-sm">Table content mapped here (Refer to Capture 3 / 7)</div>
-  </div>
-);
+const JobHistoryTab = ({ userId, role }: { userId: string; role: string }) => {
+  const [jobs, setJobs] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [filter, setFilter] = useState('All');
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
 
-const TransactionHistoryTab = ({ role }: { role: string }) => (
-  <div className="bg-white border border-slate-200 rounded-xl p-6">
-    <div className="flex justify-between items-center mb-6">
-      <h3 className="font-bold text-slate-800">Transaction History</h3>
-      <span className="text-sm text-slate-500">12 transactions</span>
-    </div>
-    <div className="space-y-0">
-      {/* Example row based on Capture 4 / 8 */}
-      <div className="flex justify-between items-center py-4 border-b border-slate-100">
-        <div className="flex items-center gap-4">
-           <div className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center">⇄</div>
-           <div>
-             <p className="font-bold text-sm text-slate-800">{role === 'FORWARDER' ? 'Wallet Deposit' : 'Earnings Deposit'}</p>
-             <p className="text-xs text-slate-400 mt-1">02:53 PM • 9 Jun 2026</p>
-           </div>
+  const fetchJobs = async () => {
+    setLoading(true);
+    const res = await getUserJobsAction(userId, { tab: filter, page });
+    if (res.success && res.data) {
+      setJobs(res.data.jobs || []);
+      setTotalPages(res.data.pagination?.totalPages || 1);
+    }
+    setLoading(false);
+  };
+
+  useEffect(() => { fetchJobs(); }, [userId, filter, page]);
+
+  // Dynamically show the counterparty column based on the profile we are viewing
+  const counterpartyHeader = role === 'FORWARDER' ? 'TRUCKER' : 'FORWARDER';
+
+  return (
+    <div className="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm">
+      
+      {/* Search & Filters */}
+      <div className="p-4 border-b border-slate-200 flex flex-col sm:flex-row gap-4 items-center">
+        <div className="flex items-center px-3 py-2 border border-slate-200 rounded-lg w-full sm:max-w-md focus-within:border-[#0241E8] transition-colors">
+          <Search size={18} className="text-slate-400 mr-2" />
+          <input 
+            type="text" 
+            placeholder="Search job ID, route, trucker..." 
+            className="bg-transparent text-sm w-full outline-none placeholder:text-slate-400" 
+          />
         </div>
-        <span className="font-bold text-slate-900">₦400,000.00</span>
-      </div>
-    </div>
-  </div>
-);
-
-const SavedDestinationsTab = () => (
-  <div className="bg-white border border-slate-200 rounded-xl p-6">
-     <div className="flex justify-between items-center mb-6">
-      <h3 className="font-bold text-slate-800">Saved destinations</h3>
-      <span className="text-sm text-slate-500">3 saved</span>
-    </div>
-    {/* Static content based on Capture 2 */}
-    <div className="space-y-6">
-      <div className="flex gap-3 items-start">
-        <div className="mt-1"><MapPinPlusInside /></div>
-        <div>
-          <p className="font-bold text-sm text-slate-800">Aba Industrial Road</p>
-          <p className="text-xs text-slate-500 mt-1">14 Aba Industrial Road, Aba, Abia State</p>
+        
+        <div className="flex gap-2 overflow-x-auto custom-scrollbar w-full sm:w-auto">
+          {['All', 'Active', 'Completed', 'Cancelled'].map(f => (
+            <button 
+              key={f} 
+              onClick={() => { setFilter(f); setPage(1); }}
+              className={`px-4 py-1.5 text-sm font-bold rounded-full border whitespace-nowrap transition-colors ${
+                f === filter 
+                  ? 'bg-[#0241E8] text-white border-[#0241E8]' 
+                  : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'
+              }`}
+            >
+              {f}
+            </button>
+          ))}
         </div>
       </div>
+      
+      {/* Table */}
+      <div className="overflow-x-auto">
+        <table className="w-full text-left whitespace-nowrap">
+          <thead className="bg-[#F8FAFC] text-[11px] font-bold text-slate-400 uppercase tracking-wider border-b border-slate-200">
+            <tr>
+              <th className="p-4 px-6">JOB ID</th>
+              <th className="p-4">{counterpartyHeader}</th>
+              <th className="p-4">ROUTE</th>
+              <th className="p-4">STATUS</th>
+              <th className="p-4">COMPLETION DATE</th>
+              <th className="p-4 px-6 text-center">ACTION</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-slate-100">
+            {loading ? (
+              <tr><td colSpan={6} className="p-10 text-center"><Loader2 className="animate-spin text-[#0241E8] w-6 h-6 mx-auto" /></td></tr>
+            ) : jobs.length === 0 ? (
+              <tr><td colSpan={6} className="p-10 text-center text-sm text-slate-500">No jobs found.</td></tr>
+            ) : (
+              jobs.map(job => (
+                <tr key={job.jobId} className="hover:bg-slate-50/50 transition-colors">
+                  {/* Ensure Job ID has the '#' prefix as shown in the design */}
+                  <td className="p-4 px-6 font-bold text-[#0241E8] text-sm">
+                    {job.jobId.startsWith('#') ? job.jobId : `#${job.jobId}`}
+                  </td>
+                  
+                  {/* Show the correct counterparty name */}
+                  <td className="p-4 text-sm text-slate-800 font-medium">
+                    {role === 'FORWARDER' ? job.trucker : job.forwarder}
+                  </td>
+                  
+                  <td className="p-4 text-sm text-slate-800 truncate max-w-[200px]" title={job.route}>
+                    {job.route}
+                  </td>
+                  
+                  <td className="p-4">
+                    <JobStatusPill status={job.status} />
+                  </td>
+                  
+                  <td className="p-4 text-sm text-slate-800">
+                    {formatShortDate(job.completionDate || job.createdAt)}
+                  </td>
+                  
+                  <td className="p-4 px-6 text-center">
+                    <button className="px-4 py-1.5 border border-[#E2E8F0] rounded-lg text-[13px] font-bold text-[#0241E8] hover:bg-blue-50 hover:border-blue-200 transition-colors bg-white">
+                      View
+                    </button>
+                  </td>
+                </tr>
+              ))
+            )}
+          </tbody>
+        </table>
+      </div>
+
+      {/* Pagination Container */}
+      {!loading && jobs.length > 0 && (
+        <div className="p-4 sm:px-6 border-t border-slate-100 flex items-center justify-between text-sm text-slate-500 bg-white">
+          <span>Page {page} of {totalPages}</span>
+          <div className="flex space-x-2">
+            <button 
+              disabled={page === 1} 
+              onClick={() => setPage(p => Math.max(1, p - 1))} 
+              className="px-3 py-1.5 border border-slate-200 rounded-lg bg-white hover:bg-slate-50 disabled:opacity-50 disabled:hover:bg-white font-medium transition-colors"
+            >
+              Previous
+            </button>
+            <button 
+              disabled={page >= totalPages} 
+              onClick={() => setPage(p => Math.min(totalPages, p + 1))} 
+              className="px-3 py-1.5 border border-slate-200 rounded-lg bg-white hover:bg-slate-50 disabled:opacity-50 disabled:hover:bg-white font-medium transition-colors"
+            >
+              Next
+            </button>
+          </div>
+        </div>
+      )}
     </div>
-  </div>
-);
+  );
+};
+const TransactionHistoryTab = ({ userId, role }: { userId: string, role: string }) => {
+  const [transactions, setTransactions] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [total, setTotal] = useState(0);
+
+  const fetchTransactions = async () => {
+    setLoading(true);
+    const res = await getUserTransactionsAction(userId, { page });
+    if (res.success && res.data) {
+      setTransactions(res.data.transactions || []);
+      setTotalPages(res.data.pagination?.totalPages || 1);
+      setTotal(res.data.total || 0);
+    }
+    setLoading(false);
+  };
+
+  useEffect(() => { fetchTransactions(); }, [userId, page]);
+
+  return (
+    <div className="bg-white border border-slate-200 rounded-xl p-6">
+      <div className="flex justify-between items-center mb-6">
+        <h3 className="font-bold text-slate-800">Transaction History</h3>
+        <span className="text-sm text-slate-500">{total} transactions</span>
+      </div>
+      
+      {loading ? (
+        <div className="flex justify-center py-10"><Loader2 className="animate-spin text-[#0241E8] w-6 h-6" /></div>
+      ) : transactions.length === 0 ? (
+        <p className="text-center text-sm text-slate-500 py-6">No transactions found.</p>
+      ) : (
+        <div className="space-y-0">
+          {transactions.map(txn => (
+            <div key={txn.id} className="flex justify-between items-center py-4 border-b border-slate-100 last:border-0">
+              <div className="flex items-center gap-4">
+                <div className="w-8 h-8 rounded-full bg-slate-100 text-slate-500 flex items-center justify-center font-bold">⇄</div>
+                <div>
+                  <p className="font-bold text-sm text-slate-800">{txn.label}</p>
+                  <p className="text-xs text-slate-400 mt-1">{formatDate(txn.createdAt)}</p>
+                </div>
+              </div>
+              <div className="text-right">
+                <span className="font-bold text-slate-900 block">{formatMoney(txn.amount)}</span>
+                <span className={`text-[10px] font-bold px-2 py-0.5 rounded uppercase mt-1 inline-block ${txn.status === 'COMPLETED' ? 'text-green-600 bg-green-50' : 'text-amber-600 bg-amber-50'}`}>{txn.status}</span>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {!loading && transactions.length > 0 && (
+        <div className="mt-6 pt-4 border-t border-slate-100 flex items-center justify-between text-sm text-slate-500">
+          <span>Page {page} of {totalPages}</span>
+          <div className="flex space-x-2">
+            <button disabled={page === 1} onClick={() => setPage(p => Math.max(1, p - 1))} className="px-3 py-1.5 border border-slate-200 rounded-lg bg-white hover:bg-slate-50 disabled:opacity-50 disabled:hover:bg-white font-medium transition-colors">Previous</button>
+            <button disabled={page >= totalPages} onClick={() => setPage(p => Math.min(totalPages, p + 1))} className="px-3 py-1.5 border border-slate-200 rounded-lg bg-white hover:bg-slate-50 disabled:opacity-50 disabled:hover:bg-white font-medium transition-colors">Next</button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+const SavedDestinationsTab = ({ userId }: { userId: string }) => {
+  const [destinations, setDestinations] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [total, setTotal] = useState(0);
+
+  const fetchDestinations = async () => {
+    setLoading(true);
+    const res = await getUserSavedDestinationsAction(userId);
+    if (res.success && res.data) {
+      setDestinations(res.data.destinations || []);
+      setTotal(res.data.total || 0);
+    }
+    setLoading(false);
+  };
+
+  useEffect(() => { fetchDestinations(); }, [userId]);
+
+  return (
+    <div className="bg-white border border-slate-200 rounded-xl p-6">
+       <div className="flex justify-between items-center mb-6">
+        <h3 className="font-bold text-slate-800">Saved destinations</h3>
+        <span className="text-sm text-slate-500">{total} saved</span>
+      </div>
+      
+      {loading ? (
+        <div className="flex justify-center py-10"><Loader2 className="animate-spin text-[#0241E8] w-6 h-6" /></div>
+      ) : destinations.length === 0 ? (
+        <p className="text-center text-sm text-slate-500 py-6">No saved destinations found.</p>
+      ) : (
+        <div className="space-y-6">
+          {destinations.map(dest => (
+            <div key={dest.id} className="flex gap-3 items-start pb-4 border-b border-slate-100 last:border-0 last:pb-0">
+              <div className="mt-1 text-slate-400"><MapPinPlusInside size={20} /></div>
+              <div>
+                <p className="font-bold text-sm text-slate-800">{dest.label}</p>
+                <p className="text-xs text-slate-500 mt-1">{dest.address}</p>
+                <p className="text-[10px] text-slate-400 mt-1 uppercase">Added {formatDate(dest.createdAt).split(',')[0]}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};

@@ -1,11 +1,12 @@
-import { getUsersAction } from '@/app/actions/users';
+import { getUsersAction, getUserStats } from '@/app/actions/users';
 import UsersClient from './UsersClient';
 
 export default async function UsersPage() {
   // Fetch the initial payload for the default tab (Forwarders)
   const initialRes = await getUsersAction('forwarders', { status: 'All', page: 1 });
 
-  console.log('initialsUser', initialRes.data)
+
+  // console.log('initialsUser', initialRes.data)
 
   return (
     <UsersClient 

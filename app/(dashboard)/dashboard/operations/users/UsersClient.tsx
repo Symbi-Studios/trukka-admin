@@ -5,7 +5,8 @@ import { Search, ArrowLeft, Loader2, X } from 'lucide-react'
 import { useState, useEffect } from 'react'
 import { 
   getUsersAction, approveUserAction, rejectUserAction, 
-  suspendUserAction, reactivateUserAction   
+  suspendUserAction, reactivateUserAction,   
+  getUserStats
 } from '@/app/actions/users'
 import { UserDetails } from '@/components/dashboard/screen/UserDetails'
 import LoadiingSpiner from '@/components/LoadiingSpiner'
@@ -62,7 +63,7 @@ export const StatusPill = ({ status }: { status?: string | null }) => {
 }
 
 const StatCard = ({ title, total, today, week, month }: { title: string, total: number, today: number, week: number, month: number }) => (
-  <div className="bg-white rounded-xl p-6 border border-slate-200 shadow-sm">
+  <div className="bg-white rounded-xl p-6 border border-slate-200 shadow-sm flex flex-col justify-between">
     <p className="text-xs font-bold text-slate-500 uppercase tracking-wide mb-2">{title}</p>
     <h2 className="text-3xl font-extrabold text-slate-900 mb-4">{total}</h2>
     <div className="space-y-1.5">
@@ -72,6 +73,7 @@ const StatCard = ({ title, total, today, week, month }: { title: string, total: 
     </div>
   </div>
 )
+
 
 export default function UsersClient({ initialUsersData }: any) {
   const [activeTab, setActiveTab] = useState<UserRole>('Forwarders');
@@ -84,17 +86,12 @@ export default function UsersClient({ initialUsersData }: any) {
   const [totalUsers, setTotalUsers] = useState(initialUsersData?.pagination?.total || 0);
   
   const [users, setUsers] = useState<any[]>(initialUsersData?.users || []);
+  const [stats, setStats] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
   
   const [isFirstRender, setIsFirstRender] = useState(true);
 
-  // Fallback stats (Replace with `initialUsersData?.stats` if your backend provides it)
-  const stats = initialUsersData?.stats || {
-    forwarders: { total: 78, today: 3, week: 12, month: 28 },
-    truckers: { total: 142, today: 1, week: 5, month: 14 },
-    drivers: { total: 220, today: 4, week: 18, month: 42 }
-  };
 
   const fetchUsers = async () => {
     setIsLoading(true);
@@ -124,6 +121,19 @@ export default function UsersClient({ initialUsersData }: any) {
     const timer = setTimeout(() => { fetchUsers(); }, 300);
     return () => clearTimeout(timer);
   }, [activeTab, activeFilter, searchQuery, currentPage]);
+
+  //States fetch
+  useEffect(() => {
+    const fetchUserStats = async () => {
+      const res = await getUserStats();
+      if (res.success && res.data) {
+        console.log(res.data)
+        setStats(res.data);
+      }
+    }
+
+    fetchUserStats();
+  }, []);
 
   const handleAction = async (actionFn: Function, id: string) => {
     // If it's a suspension action, we require a reason as per the API spec
@@ -192,10 +202,29 @@ export default function UsersClient({ initialUsersData }: any) {
           
           {/* Top Stat Cards Section */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-            <StatCard title="TOTAL FORWARDERS" {...stats.forwarders} />
-            <StatCard title="TOTAL TRUCKERS" {...stats.truckers} />
-            <StatCard title="TOTAL DRIVERS" {...stats.drivers} />
-          </div>
+              <StatCard 
+                title="TOTAL FORWARDERS" 
+                total={stats?.byRole.forwarders?.total || 0}
+                today={stats?.byRole.forwarders?.today || 0}
+                week={stats?.byRole.forwarders?.thisWeek || 0}
+                month={stats?.byRole.forwarders?.thisMonth || 0}
+              />
+              <StatCard 
+                title="TOTAL TRUCKERS" 
+                total={stats?.byRole.truckers?.total || 0}
+                today={stats?.byRole.truckers?.today || 0}
+                week={stats?.byRole.truckers?.thisWeek || 0}
+                month={stats?.byRole.truckers?.thisMonth || 0}
+              />
+              <StatCard 
+                title="TOTAL DRIVERS" 
+                total={stats?.byRole.drivers?.total || 0}
+                today={stats?.byRole.drivers?.today || 0}
+                week={stats?.byRole.drivers?.thisWeek || 0}
+                month={stats?.byRole.drivers?.thisMonth || 0}
+              />
+            </div>
+        
 
           <div className='flex mt-5 border-b border-b-slate-200'>
             {(['Forwarders', 'Truckers', 'Drivers'] as UserRole[]).map(t => (
