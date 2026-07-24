@@ -207,7 +207,7 @@ export default function DocReviewClient({ initialStats, initialQueue, initialTru
               {activeTab === 'Document Queue' ? 'Document Queue' : 'Truck Registration Approvals'}
             </p>
             {activeTab === 'Truck registration' && initialStats?.awaiting > 0 && (
-              <span className='bg-[#FFF8EB] text-[#FFBA2F] px-3 py-1 rounded-full text-xs font-bold'>{initialStats.awaiting} pending</span>
+              <span className='bg-[#FFF8EB] text-[#FFBA2F] px-3 py-1 rounded-full text-xs font-bold'>{trucksData.length} pending</span>
             )}
           </div>
 

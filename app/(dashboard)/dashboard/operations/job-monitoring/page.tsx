@@ -9,6 +9,8 @@ export default async function JobMonitoringPage() {
     getJobsAction({ page: 1 })
   ]);
 
+  console.log('docs', pendingDocs)
+
   return (
     <JobMonitoringClient 
       initialStats={stats?.data || null} 

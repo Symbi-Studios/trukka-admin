@@ -15,6 +15,7 @@ export const DocumentReviewModal = ({ jobId, onClose, onRefresh }: { jobId: stri
       setIsLoading(true);
       getDocQueueDetailAction(jobId).then(res => {
         if (res.success) {
+          console.log('docDetails', res.data)
           setData(res.data);
           // Auto-select first available document tab
           if (res.data.documents?.tdo) setActiveTab('tdo');
