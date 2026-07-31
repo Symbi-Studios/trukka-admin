@@ -3,6 +3,7 @@ import { UserDetails } from '@/components/dashboard/screen/UserDetails';
 import LoadiingSpiner from '@/components/LoadiingSpiner';
 import { DocumentReviewModal } from '@/components/modals/DocumentReviewModal';
 import { ArrowLeft, Loader2 } from 'lucide-react'
+import { useRouter } from 'next/navigation';
 import React, { useEffect, useState } from 'react'
 
 const JobDetails = ({ jobId, onBack, onIntervene }: { jobId: string; onBack: () => void, onIntervene: () => void }) => {
@@ -10,6 +11,9 @@ const JobDetails = ({ jobId, onBack, onIntervene }: { jobId: string; onBack: () 
     const [jobData, setJobData] = useState<any>(null);
     const [docModal, setDocModal] = useState('')
     const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
+    
+    const router = useRouter();
+const [isMessaging, setIsMessaging] = useState(false);
 
    const isoString = jobData?.tdoDate;
     // 1. Declare the variable outside the block
@@ -80,6 +84,25 @@ const JobDetails = ({ jobId, onBack, onIntervene }: { jobId: string; onBack: () 
         return <UserDetails userId={selectedUserId} onBack={() => setSelectedUserId(null)} />;
     }
 
+
+
+
+const handleMessageDriver = async () => {
+  const targetUserId = jobData?.driver?.id || jobData?.trucker?.id;
+
+  if (!targetUserId) {
+    alert("No driver or trucker assigned to this job.");
+    return;
+  }
+
+  router.push(`/dashboard/system/support?userId=${targetUserId}&subject=${encodeURIComponent(`Regarding Job: ${jobData.jobNumber}`)}`);
+  
+  setIsMessaging(true);
+  
+
+    
+};
+
   return (
     <div className="p-5  mx-auto">
         <div className='flex justify-between gap-5'>
@@ -92,7 +115,12 @@ const JobDetails = ({ jobId, onBack, onIntervene }: { jobId: string; onBack: () 
                 </p>
             </div>
             <div className="flex space-x-3 justify-end ">
-                <button className="px-4 py-2 text-[13px] font-semibold text-white bg-[#0241E8] border hover:bg-blue-700 rounded-lg">
+               <button 
+                onClick={handleMessageDriver}
+                disabled={isMessaging}
+                className="px-4 py-2 text-[13px] font-semibold text-white bg-[#0241E8] border hover:bg-blue-700 rounded-lg disabled:opacity-50 flex items-center gap-2"
+                >
+                {isMessaging && <Loader2 size={14} className="animate-spin" />}
                 Message driver
                 </button>
                 <button onClick={onIntervene}  className="px-4 py-2 text-[13px] font-semibold text-slate-700 bg-white border border-slate-300 hover:bg-slate-50 rounded-lg">

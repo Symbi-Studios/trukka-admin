@@ -6,24 +6,8 @@ import { HeaderMenu } from '@/components/layouts/HeaderMenu';
 import { InboxTab } from './InboxTab';
 import { BroadcastTab } from './BroadcastTab';
 import { TemplatesTab } from './TemplatesTab';
+import { KPICards } from './KPICards';
 
-const KPICards = () => (
-  <div className="grid grid-cols-1 md:grid-cols-3 gap-5 mb-6">
-    <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
-      <p className="text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-2">Open Threads</p>
-      <h3 className="text-3xl font-bold text-blue-600 mb-1">6</h3>
-      <p className="text-xs font-bold text-slate-800">Need response</p>
-    </div>
-    <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
-      <p className="text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-2">Resolved Today</p>
-      <h3 className="text-3xl font-bold text-emerald-500 mb-1">14</h3>
-    </div>
-    <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
-      <p className="text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-2">Avg Response Time</p>
-      <h3 className="text-3xl font-bold text-slate-800 mb-1">1.4h</h3>
-    </div>
-  </div>
-);
 
 type TabType = 'Inbox' | 'Broadcast' | 'Templates';
 
