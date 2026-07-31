@@ -1,9 +1,10 @@
 import { UnderConstruction } from '@/components/dashboard/ui/UnderConstruction'
 import React from 'react'
+import PaymentsClient from './PaymentsClient'
 
 const page = () => {
   return (
-    <UnderConstruction />
+    <PaymentsClient />
   )
 }
 

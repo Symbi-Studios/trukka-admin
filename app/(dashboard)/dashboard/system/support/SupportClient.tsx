@@ -1,12 +1,13 @@
 'use client'
 
-import  { useState } from 'react';
+import  { Suspense, useState } from 'react';
 import { HeaderMenu } from '@/components/layouts/HeaderMenu';
 
 import { InboxTab } from './InboxTab';
 import { BroadcastTab } from './BroadcastTab';
 import { TemplatesTab } from './TemplatesTab';
 import { KPICards } from './KPICards';
+import { Loader2 } from 'lucide-react';
 
 
 type TabType = 'Inbox' | 'Broadcast' | 'Templates';
@@ -39,7 +40,15 @@ const SupportClient = () => {
         </div>
 
         {/* Render Active Tab */}
-        {activeTab === 'Inbox' && <InboxTab />}
+        {activeTab === 'Inbox' && (
+          <Suspense fallback={
+            <div className="flex bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden h-[calc(100vh-280px)] min-h-[600px] items-center justify-center">
+              <Loader2 className="animate-spin text-blue-600 w-8 h-8" />
+            </div>
+          }>
+            <InboxTab />
+          </Suspense>
+        )}
         {activeTab === 'Broadcast' && <BroadcastTab />}
         {activeTab === 'Templates' && <TemplatesTab />}
         
